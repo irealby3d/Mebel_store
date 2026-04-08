@@ -13,7 +13,6 @@ if (typeof window.Telegram === 'undefined') {
 }
 
 // Config - GitHub Secrets dan inject qilinadi
-// Agar bo'sh bo'lsa, local testing uchun fallback
 const CONFIG = {
     SUPABASE_URL: '',
     SUPABASE_ANON_KEY: ''
@@ -23,6 +22,20 @@ const CONFIG = {
 if (!CONFIG.SUPABASE_URL) {
     CONFIG.SUPABASE_URL = 'https://hgisisjblsegtnybjkhn.supabase.co';
     CONFIG.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhnaXNpc2pibHNlZ3RueWJqa2huIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NzM3NjYsImV4cCI6MjA5MTE0OTc2Nn0.dragZi69rzDyBjR_5qxm2DS5izedGn22R7la6tAO4vQ';
+}
+
+// Telegram WebApp init
+const tg = window.Telegram?.WebApp;
+const tgUser = tg?.initDataUnsafe?.user;
+
+if (tg) {
+    tg.ready();
+    tg.expand();
+}
+
+// Global user - telegram yoki mock dan
+function getUser() {
+    return tgUser || window.Telegram?.WebApp?.initDataUnsafe?.user;
 }
 
 const state = {
@@ -40,14 +53,6 @@ function initSupabase() {
     if (typeof window.supabase !== 'undefined') {
         supabaseClient = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
     }
-}
-
-const tg = window.Telegram?.WebApp;
-const user = tg?.initDataUnsafe?.user;
-
-if (tg) {
-    tg.ready();
-    tg.expand();
 }
 
 function formatPrice(num) {
@@ -266,8 +271,12 @@ function updateCartBadge() {
 async function getOrCreateUser() {
     if (!supabaseClient) return null;
     
-    const telegramId = user?.id;
-    if (!telegramId) return null;
+    const telegramUser = getUser();
+    const telegramId = telegramUser?.id;
+    if (!telegramId) {
+        console.log('Telegram user ID topilmadi');
+        return null;
+    }
 
     let { data: existingUser } = await supabaseClient
         .from('s_users')
@@ -277,6 +286,7 @@ async function getOrCreateUser() {
 
     if (existingUser) {
         state.user = existingUser;
+        console.log('User topildi:', existingUser);
         return existingUser;
     }
 
@@ -284,7 +294,7 @@ async function getOrCreateUser() {
         .from('s_users')
         .insert({
             telegram_id: telegramId,
-            ism: user?.first_name || 'Mijoz',
+            ism: telegramUser?.first_name || 'Mijoz',
             role: 'customer'
         })
         .select()
@@ -292,6 +302,9 @@ async function getOrCreateUser() {
 
     if (!error && newUser) {
         state.user = newUser;
+        console.log('Yangi user yaratildi:', newUser);
+    } else {
+        console.log('User yaratishda xatolik:', error);
     }
 
     return newUser;
