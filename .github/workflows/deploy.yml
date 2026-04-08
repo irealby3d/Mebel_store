@@ -19,17 +19,54 @@ jobs:
 
       - name: Inject Supabase secrets
         run: |
-          # Replace placeholders in app.js
-          sed -i 's|SUPABASE_URL: window.SUPABASE_URL || '\'''\''|SUPABASE_URL: window.SUPABASE_URL || '\''${{ secrets.SUPABASE_URL }}'\''|g' webapp/assets/app.js
-          sed -i 's|SUPABASE_ANON_KEY: window.SUPABASE_ANON_KEY || '\'''\''|SUPABASE_ANON_KEY: window.SUPABASE_ANON_KEY || '\''${{ secrets.SUPABASE_ANON_KEY }}'\''|g' webapp/assets/app.js
+          python3 << 'PYEOF'
+          import os
           
-          # Replace placeholders in app.html
-          sed -i 's|SUPABASE_URL: window.SUPABASE_URL || '\'''\''|SUPABASE_URL: window.SUPABASE_URL || '\''${{ secrets.SUPABASE_URL }}'\''|g' webapp/app.html
-          sed -i 's|SUPABASE_ANON_KEY: window.SUPABASE_ANON_KEY || '\'''\''|SUPABASE_ANON_KEY: window.SUPABASE_ANON_KEY || '\''${{ secrets.SUPABASE_ANON_KEY }}'\''|g' webapp/app.html
+          supabase_url = os.environ.get('SUPABASE_URL', '')
+          anon_key = os.environ.get('SUPABASE_ANON_KEY', '')
+          service_key = os.environ.get('SUPABASE_SERVICE_KEY', '')
           
-          # Replace placeholders in admin.html  
-          sed -i 's|SUPABASE_URL: window.SUPABASE_URL || '\''YOUR_SUPABASE_URL'\''|SUPABASE_URL: window.SUPABASE_URL || '\''${{ secrets.SUPABASE_URL }}'\''|g' webapp/admin.html
-          sed -i 's|SUPABASE_SERVICE_KEY: window.SUPABASE_SERVICE_KEY || '\''YOUR_SERVICE_KEY'\''|SUPABASE_SERVICE_KEY: window.SUPABASE_SERVICE_KEY || '\''${{ secrets.SUPABASE_SERVICE_KEY }}'\''|g' webapp/admin.html
+          # Replace in app.js
+          with open('webapp/assets/app.js', 'r') as f:
+              content = f.read()
+          content = content.replace(
+              "SUPABASE_URL: window.SUPABASE_URL || ''",
+              f"SUPABASE_URL: '{supabase_url}'"
+          ).replace(
+              "SUPABASE_ANON_KEY: window.SUPABASE_ANON_KEY || ''",
+              f"SUPABASE_ANON_KEY: '{anon_key}'"
+          )
+          with open('webapp/assets/app.js', 'w') as f:
+              f.write(content)
+          
+          # Replace in app.html
+          with open('webapp/app.html', 'r') as f:
+              content = f.read()
+          content = content.replace(
+              "SUPABASE_URL: window.SUPABASE_URL || ''",
+              f"SUPABASE_URL: '{supabase_url}'"
+          ).replace(
+              "SUPABASE_ANON_KEY: window.SUPABASE_ANON_KEY || ''",
+              f"SUPABASE_ANON_KEY: '{anon_key}'"
+          )
+          with open('webapp/app.html', 'w') as f:
+              f.write(content)
+          
+          # Replace in admin.html
+          with open('webapp/admin.html', 'r') as f:
+              content = f.read()
+          content = content.replace(
+              "SUPABASE_URL: window.SUPABASE_URL || ''",
+              f"SUPABASE_URL: '{supabase_url}'"
+          ).replace(
+              "SUPABASE_SERVICE_KEY: window.SUPABASE_SERVICE_KEY || ''",
+              f"SUPABASE_SERVICE_KEY: '{service_key}'"
+          )
+          with open('webapp/admin.html', 'w') as f:
+              f.write(content)
+          
+          print("Secrets injected successfully!")
+          PYEOF
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
