@@ -1,13 +1,272 @@
 <!DOCTYPE html>
 <html lang="uz">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mebel Store — WebApp</title>
-  <link rel="stylesheet" href="assets/styles.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mebel Store - WebApp</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="assets/styles.css">
 </head>
 <body>
-  <div id="root">WebApp loading...</div>
-  <script src="assets/app.js"></script>
+    <header class="header">
+        <div class="header-logo">
+            <span>🏠</span>
+            <h1>Mebel Store</h1>
+        </div>
+        <div class="header-actions">
+            <div style="position:relative;">
+                <button class="icon-btn" onclick="app.navigateTo('cart')">🛒</button>
+                <span class="cart-badge" style="display:none;">0</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="container has-footer">
+        <div id="page-home" class="page">
+            <div class="input-row mb-16">
+                <input type="text" class="input" placeholder="Qidirish..." id="searchInput" oninput="searchProducts()">
+            </div>
+            <div id="categoryList" class="category-list"></div>
+            <h3 style="margin-bottom:12px;">🛍️ Mahsulotlar</h3>
+            <div id="productGrid" class="card-grid"></div>
+        </div>
+
+        <div id="page-cart" class="page hidden">
+            <h2 style="margin-bottom:16px;">🛒 Savat</h2>
+            <div id="cartItems"></div>
+            <div id="cartTotal" class="order-summary" style="display:none;">
+                <div class="summary-row">
+                    <span>Jami:</span>
+                    <span id="cartTotalValue">0 so'm</span>
+                </div>
+            </div>
+            <button class="btn mt-16" onclick="app.openModal('orderModal')" id="checkoutBtn" disabled>Buyurtma berish</button>
+        </div>
+
+        <div id="page-orders" class="page hidden">
+            <h2 style="margin-bottom:16px;">📋 Buyurtmalarim</h2>
+            <div id="orderList"></div>
+        </div>
+
+        <div id="page-profile" class="page hidden">
+            <h2 style="margin-bottom:16px;">👤 Profil</h2>
+            <div class="card">
+                <div id="userInfo">
+                    <div style="text-align:center;padding:20px;"><div class="loading"></div></div>
+                </div>
+            </div>
+            <div class="card mt-16">
+                <h4 style="margin-bottom:12px;">📱 Aloqa ma'lumotlari</h4>
+                <div class="input-group">
+                    <label class="input-label">Ism</label>
+                    <input type="text" class="input" id="profileName" placeholder="Ismingiz">
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Telefon</label>
+                    <input type="tel" class="input" id="profilePhone" placeholder="+998 XX XXX XX XX">
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Email</label>
+                    <input type="email" class="input" id="profileEmail" placeholder="email@example.com">
+                </div>
+                <button class="btn btn-secondary" onclick="saveProfile()">Saqlash</button>
+            </div>
+            <button class="btn mt-16" onclick="app.navigateTo('orders')">📋 Mening buyurtmalarim</button>
+        </div>
+    </main>
+
+    <nav class="footer-nav">
+        <div class="nav-item active" data-page="home" onclick="app.navigateTo('home')">
+            <span class="icon">🏠</span>
+            <span class="label">Bosh sahifa</span>
+        </div>
+        <div class="nav-item" data-page="cart" onclick="app.navigateTo('cart')">
+            <span class="icon">🛒</span>
+            <span class="label">Savat</span>
+        </div>
+        <div class="nav-item" data-page="orders" onclick="app.navigateTo('orders')">
+            <span class="icon">📋</span>
+            <span class="label">Buyurtmalar</span>
+        </div>
+        <div class="nav-item" data-page="profile" onclick="app.navigateTo('profile')">
+            <span class="icon">👤</span>
+            <span class="label">Profil</span>
+        </div>
+    </nav>
+
+    <div class="modal" id="productModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Mahsulot</h3>
+                <button class="modal-close" onclick="app.closeModal('productModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="modalProductImage"></div>
+                <h2 id="modalProductName" style="margin:16px 0 8px;"></h2>
+                <p id="modalProductDesc" style="color:var(--text-secondary);font-size:0.9em;margin-bottom:12px;"></p>
+                <div style="font-size:1.4em;font-weight:700;color:var(--primary);margin-bottom:16px;">
+                    <span id="modalProductPrice"></span>
+                </div>
+                <div id="modalProductId" style="display:none;"></div>
+                <button class="btn" onclick="addToCartFromModal()">🛒 Savatga qo'shish</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="orderModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Buyurtma rasmiylashtirish</h3>
+                <button class="modal-close" onclick="app.closeModal('orderModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <label class="input-label">Telefon *</label>
+                    <input type="tel" class="input" id="orderPhone" placeholder="+998 XX XXX XX XX" required>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Manzil *</label>
+                    <input type="text" class="input" id="orderAddress" placeholder="Toshkent, Chilonzor, 5-dom">
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Izoh</label>
+                    <textarea class="input" id="orderIzoh" placeholder="Qo'shimcha izoh..."></textarea>
+                </div>
+                <button class="btn" onclick="submitOrder()">✅ Buyurtma berish</button>
+                <button class="btn btn-secondary mt-8" onclick="app.closeModal('orderModal')">Bekor qilish</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration - GitHub Secrets dan inject qilinadi
+        app.CONFIG = {
+            SUPABASE_URL: window.SUPABASE_URL || '',
+            SUPABASE_ANON_KEY: window.SUPABASE_ANON_KEY || ''
+        };
+
+        let currentProductId = null;
+
+        function addToCartFromModal() {
+            if (currentProductId) {
+                app.addToCart(currentProductId);
+                app.closeModal('productModal');
+                renderCart();
+                updateCheckoutBtn();
+            }
+        }
+
+        function renderCart() {
+            const container = document.getElementById('cartItems');
+            const totalEl = document.getElementById('cartTotal');
+            
+            if (app.state.cart.length === 0) {
+                container.innerHTML = `<div class="empty-state"><div class="icon">🛒</div><h3>Savat bo'sh</h3><p>Mahsulotlar savatga qo'shilmagan</p></div>`;
+                if (totalEl) totalEl.style.display = 'none';
+                return;
+            }
+
+            container.innerHTML = app.state.cart.map(item => `
+                <div class="cart-item">
+                    <div class="cart-item-image">${item.s_products?.image_url ? `<img src="${item.s_products.image_url}" style="width:100%;height:100%;object-fit:cover;">` : '🏠'}</div>
+                    <div class="cart-item-info">
+                        <div class="cart-item-name">${item.s_products?.name || 'Mahsulot'}</div>
+                        <div class="cart-item-price">${formatPrice(item.s_products?.price || 0)}</div>
+                    </div>
+                    <div class="cart-item-qty">
+                        <button class="qty-btn" onclick="decreaseQty('${item.id}', ${item.quantity})">−</button>
+                        <span class="qty-value">${item.quantity}</span>
+                        <button class="qty-btn" onclick="increaseQty('${item.id}', ${item.quantity})">+</button>
+                    </div>
+                </div>
+            `).join('');
+
+            const total = app.state.cart.reduce((sum, item) => sum + (item.quantity * (item.s_products?.price || 0)), 0);
+            if (totalEl) { totalEl.style.display = 'block'; document.getElementById('cartTotalValue').textContent = formatPrice(total); }
+        }
+
+        function decreaseQty(cartId, currentQty) {
+            if (currentQty <= 1) { app.removeFromCart(cartId); }
+            else { app.updateCartQuantity(cartId, currentQty - 1); }
+            renderCart(); updateCheckoutBtn();
+        }
+
+        function increaseQty(cartId, currentQty) { app.updateCartQuantity(cartId, currentQty + 1); renderCart(); updateCheckoutBtn(); }
+
+        function updateCheckoutBtn() {
+            const btn = document.getElementById('checkoutBtn');
+            if (btn) btn.disabled = app.state.cart.length === 0;
+        }
+
+        async function submitOrder() {
+            const phone = document.getElementById('orderPhone').value.trim();
+            const address = document.getElementById('orderAddress').value.trim();
+            const izoh = document.getElementById('orderIzoh').value.trim();
+
+            if (!phone) { app.showToast('Telefon raqam kiritilmadi', 'error'); return; }
+            if (!address) { app.showToast('Manzil kiritilmadi', 'error'); return; }
+
+            const order = await app.createOrder({ phone, address, izoh });
+            if (order) {
+                app.closeModal('orderModal');
+                document.getElementById('orderPhone').value = '';
+                document.getElementById('orderAddress').value = '';
+                document.getElementById('orderIzoh').value = '';
+                app.navigateTo('orders');
+            }
+        }
+
+        function searchProducts() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            document.querySelectorAll('.product-card').forEach(card => {
+                const name = card.querySelector('.product-name').textContent.toLowerCase();
+                card.style.display = name.includes(query) ? '' : 'none';
+            });
+        }
+
+        async function saveProfile() {
+            const name = document.getElementById('profileName').value.trim();
+            const phone = document.getElementById('profilePhone').value.trim();
+            const email = document.getElementById('profileEmail').value.trim();
+            await app.updateUserProfile({ ism: name, telefon: phone, email });
+        }
+
+        const originalRenderProducts = window.renderProducts;
+        window.renderProducts = function() {
+            originalRenderProducts();
+            document.querySelectorAll('.product-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const product = app.state.products.find(p => p.id === card.dataset.id);
+                    if (product) {
+                        currentProductId = product.id;
+                        document.getElementById('modalProductName').textContent = product.name;
+                        document.getElementById('modalProductDesc').textContent = product.description || 'Tavsif mavjud emas';
+                        document.getElementById('modalProductPrice').textContent = formatPrice(product.price);
+                        document.getElementById('modalProductImage').innerHTML = product.image_url 
+                            ? `<img src="${product.image_url}" style="width:100%;height:200px;object-fit:cover;border-radius:12px;">`
+                            : '<div style="font-size:4em;padding:40px;text-align:center;">🏠</div>';
+                        app.openModal('productModal');
+                    }
+                });
+            });
+        };
+
+        const originalNavigate = app.navigateTo;
+        app.navigateTo = function(page) {
+            originalNavigate(page);
+            if (page === 'cart') { renderCart(); updateCheckoutBtn(); }
+            if (page === 'profile') {
+                if (app.state.user) {
+                    document.getElementById('profileName').value = app.state.user.ism || '';
+                    document.getElementById('profilePhone').value = app.state.user.telefon || '';
+                    document.getElementById('profileEmail').value = app.state.user.email || '';
+                }
+            }
+        };
+
+        initApp();
+    </script>
+    <script src="assets/app.js"></script>
 </body>
 </html>
