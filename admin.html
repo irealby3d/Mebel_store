@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Mebel Store</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="assets/styles.css">
+    <style>
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .login-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 32px;
+            width: 100%;
+            max-width: 400px;
+        }
+        .admin-header {
+            background: var(--bg-secondary);
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .admin-table-img {
+            width: 50px;
+            height: 50px;
+            border-radius: var(--radius-xs);
+            object-fit: cover;
+            background: var(--bg-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+        }
+        .status-dot.active { background: var(--success); }
+        .status-dot.inactive { background: var(--error); }
+    </style>
+</head>
+<body>
+    <!-- Login Page -->
+    <div id="loginPage" class="login-container">
+        <div class="login-card">
+            <div style="text-align:center;margin-bottom:24px;">
+                <span style="font-size:3em;">🔐</span>
+                <h2 style="margin-top:12px;">Admin Login</h2>
+                <p style="color:var(--text-secondary);font-size:0.9em;">Mebel Store Boshqaruv</p>
+            </div>
+            <div class="input-group">
+                <label class="input-label">Email</label>
+                <input type="email" class="input" id="loginEmail" placeholder="admin@example.com">
+            </div>
+            <div class="input-group">
+                <label class="input-label">Parol</label>
+                <input type="password" class="input" id="loginPassword" placeholder="••••••••">
+            </div>
+            <button class="btn" onclick="adminLogin()">Kirish</button>
+            <p id="loginError" style="color:var(--error);text-align:center;margin-top:12px;font-size:0.85em;" class="hidden"></p>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard -->
+    <div id="adminDashboard" class="hidden">
+        <!-- Header -->
+        <header class="admin-header">
+            <div class="header-logo">
+                <span>🏠</span>
+                <h1 style="font-size:1.1em;">Mebel Store Admin</h1>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;">
+                <span id="adminName" style="font-size:0.9em;color:var(--text-secondary);"></span>
+                <button class="btn btn-sm btn-secondary" onclick="adminLogout()">Chiqish</button>
+            </div>
+        </header>
+
+        <!-- Tabs -->
+        <div class="container">
+            <div class="tabs">
+                <div class="tab active" data-tab="dashboard" onclick="switchTab('dashboard')">📊 Dashboard</div>
+                <div class="tab" data-tab="products" onclick="switchTab('products')">📦 Mahsulotlar</div>
+                <div class="tab" data-tab="orders" onclick="switchTab('orders')">📋 Buyurtmalar</div>
+            </div>
+
+            <!-- Dashboard Tab -->
+            <div id="tab-dashboard" class="tab-content">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="value" id="statOrders">0</div>
+                        <div class="label">Buyurtmalar</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value" id="statRevenue">0</div>
+                        <div class="label">Daromad (so'm)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value" id="statProducts">0</div>
+                        <div class="label">Mahsulotlar</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value" id="statUsers">0</div>
+                        <div class="label">Mijozlar</div>
+                    </div>
+                </div>
+
+                <h3 style="margin-bottom:12px;">🆕 So'nggi buyurtmalar</h3>
+                <div id="recentOrders"></div>
+            </div>
+
+            <!-- Products Tab -->
+            <div id="tab-products" class="tab-content hidden">
+                <div class="flex justify-between items-center mb-16">
+                    <h3>📦 Mahsulotlar ro'yxati</h3>
+                    <button class="btn btn-sm" onclick="showProductModal()">+ Qo'shish</button>
+                </div>
+                <div class="input-group mb-16">
+                    <input type="text" class="input" placeholder="Qidirish..." id="productSearch" oninput="filterProducts()">
+                </div>
+                <div class="table-wrapper">
+                    <table class="table" id="productsTable">
+                        <thead>
+                            <tr>
+                                <th>Rasm</th>
+                                <th>Nomi</th>
+                                <th>Narxi</th>
+                                <th>Ombor</th>
+                                <th>Status</th>
+                                <th>Amallar</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Orders Tab -->
+            <div id="tab-orders" class="tab-content hidden">
+                <h3 style="margin-bottom:16px;">📋 Buyurtmalar</h3>
+                <div id="ordersList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Edit Modal -->
+    <div class="modal" id="productEditModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="productModalTitle">Mahsulot qo'shish</h3>
+                <button class="modal-close" onclick="closeProductModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editProductId">
+                <div class="input-group">
+                    <label class="input-label">Nomi *</label>
+                    <input type="text" class="input" id="editProductName" placeholder="Mahsulot nomi">
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Kategoriya</label>
+                    <select class="input" id="editProductCategory">
+                        <option value="">Tanlang...</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Narxi (so'm) *</label>
+                    <input type="number" class="input" id="editProductPrice" placeholder="1500000">
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Birligi</label>
+                    <input type="text" class="input" id="editProductUnit" placeholder="dona">
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Omborda soni</label>
+                    <input type="number" class="input" id="editProductStock" placeholder="10">
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Rasm URL</label>
+                    <input type="url" class="input" id="editProductImage" placeholder="https://...">
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Tavsif</label>
+                    <textarea class="input" id="editProductDesc" placeholder="Mahsulot haqida..."></textarea>
+                </div>
+                <div class="flex gap-8 mb-16">
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                        <input type="checkbox" id="editProductActive" checked>
+                        Faol
+                    </label>
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                        <input type="checkbox" id="editProductFeatured">
+                        Tavsiya etilgan
+                    </label>
+                </div>
+                <button class="btn" onclick="saveProduct()">💾 Saqlash</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const CONFIG = {
+            SUPABASE_URL: window.SUPABASE_URL || 'https://hgisisjblsegtnybjkhn.supabase.co',
+            SUPABASE_SERVICE_KEY: window.SUPABASE_SERVICE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhnaXNpc2pibHNlZ3RueWJqa2huIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NzM3NjYsImV4cCI6MjA5MTE0OTc2Nn0.dragZi69rzDyBjR_5qxm2DS5izedGn22R7la6tAO4vQ'
+        };
+
+        // Supabase Admin Client
+        let supabase = null;
+
+        function initSupabaseAdmin() {
+            if (typeof window.supabase !== 'undefined') {
+                supabase = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_SERVICE_KEY);
+            }
+        }
+
+        // State
+        let adminUser = null;
+        let allProducts = [];
+        let allOrders = [];
+
+        // Login
+        async function adminLogin() {
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+
+            if (!email || !password) {
+                showError('Email va parol kiritilmadi');
+                return;
+            }
+
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+                
+                if (error) throw error;
+
+                const { data: userData } = await supabase
+                    .from('s_users')
+                    .select('*')
+                    .eq('id', data.user.id)
+                    .single();
+
+                if (userData?.role !== 'admin') {
+                    await supabase.auth.signOut();
+                    showError('Sizda admin huquqi yo\'q');
+                    return;
+                }
+
+                adminUser = userData;
+                showDashboard();
+            } catch (e) {
+                showError('Login xatosi: ' + e.message);
+            }
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('loginError');
+            el.textContent = msg;
+            el.classList.remove('hidden');
+        }
+
+        function showDashboard() {
+            document.getElementById('loginPage').classList.add('hidden');
+            document.getElementById('adminDashboard').classList.remove('hidden');
+            document.getElementById('adminName').textContent = adminUser?.ism || adminUser?.email;
+            
+            loadDashboardData();
+        }
+
+        async function adminLogout() {
+            await supabase.auth.signOut();
+            adminUser = null;
+            document.getElementById('loginPage').classList.remove('hidden');
+            document.getElementById('adminDashboard').classList.add('hidden');
+        }
+
+        // Tabs
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.tab[data-tab="${tab}"]`).classList.add('active');
+            
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+
+            if (tab === 'dashboard') loadDashboardData();
+            if (tab === 'products') loadProducts();
+            if (tab === 'orders') loadOrders();
+        }
+
+        // Dashboard
+        async function loadDashboardData() {
+            if (!supabase) return;
+
+            const [orders, products, users] = await Promise.all([
+                supabase.from('s_orders').select('*'),
+                supabase.from('s_products').select('*'),
+                supabase.from('s_users').select('*').eq('role', 'customer')
+            ]);
+
+            const totalRevenue = orders.data?.reduce((sum, o) => sum + (o.total || 0), 0) || 0;
+
+            document.getElementById('statOrders').textContent = orders.data?.length || 0;
+            document.getElementById('statRevenue').textContent = formatPrice(totalRevenue);
+            document.getElementById('statProducts').textContent = products.data?.length || 0;
+            document.getElementById('statUsers').textContent = users.data?.length || 0;
+
+            const recent = orders.data?.slice(0, 5) || [];
+            document.getElementById('recentOrders').innerHTML = recent.length ? recent.map(o => `
+                <div class="card">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <strong>#${o.id.slice(0, 8)}</strong>
+                            <span class="badge badge-${o.status}" style="margin-left:8px;">${getStatusText(o.status)}</span>
+                        </div>
+                        <strong style="color:var(--primary);">${formatPrice(o.total)}</strong>
+                    </div>
+                    <div style="font-size:0.8em;color:var(--text-secondary);margin-top:4px;">
+                        ${o.telefon || 'Telefon yo\'q'} | ${new Date(o.created_at).toLocaleDateString('uz-UZ')}
+                    </div>
+                </div>
+            `).join('') : '<p style="color:var(--text-secondary);text-align:center;">Buyurtmalar yo\'q</p>';
+        }
+
+        // Products
+        async function loadProducts() {
+            if (!supabase) return;
+
+            const { data } = await supabase
+                .from('s_products')
+                .select('*, s_categories(name)')
+                .order('created_at', { ascending: false });
+
+            allProducts = data || [];
+            renderProducts(allProducts);
+            loadCategories();
+        }
+
+        function renderProducts(products) {
+            const tbody = document.getElementById('productsBody');
+            tbody.innerHTML = products.map(p => `
+                <tr>
+                    <td>
+                        <div class="admin-table-img">
+                            ${p.image_url ? `<img src="${p.image_url}" style="width:100%;height:100%;object-fit:cover;">` : '🏠'}
+                        </div>
+                    </td>
+                    <td>
+                        <strong>${p.name}</strong>
+                        <div style="font-size:0.75em;color:var(--text-secondary);">${p.s_categories?.name || ' Kategoriya yo\'q'}</div>
+                    </td>
+                    <td>${formatPrice(p.price)}</td>
+                    <td>${p.stock}</td>
+                    <td>
+                        <span class="status-dot ${p.is_active ? 'active' : 'inactive'}"></span>
+                        ${p.is_active ? 'Faol' : 'O\'chiq'}
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary" onclick="editProduct('${p.id}')">✏️</button>
+                        <button class="btn btn-sm" style="background:var(--error);" onclick="deleteProduct('${p.id}')">🗑️</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function filterProducts() {
+            const query = document.getElementById('productSearch').value.toLowerCase();
+            const filtered = allProducts.filter(p => 
+                p.name.toLowerCase().includes(query)
+            );
+            renderProducts(filtered);
+        }
+
+        async function loadCategories() {
+            if (!supabase) return;
+            const { data } = await supabase.from('s_categories').select('*').order('sort_order');
+            
+            const select = document.getElementById('editProductCategory');
+            select.innerHTML = '<option value="">Tanlang...</option>' + 
+                (data || []).map(c => `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
+        }
+
+        function showProductModal(product = null) {
+            document.getElementById('productModalTitle').textContent = product ? 'Mahsulot tahrirlash' : 'Mahsulot qo\'shish';
+            document.getElementById('editProductId').value = product?.id || '';
+            document.getElementById('editProductName').value = product?.name || '';
+            document.getElementById('editProductCategory').value = product?.category_id || '';
+            document.getElementById('editProductPrice').value = product?.price || '';
+            document.getElementById('editProductUnit').value = product?.unit || 'dona';
+            document.getElementById('editProductStock').value = product?.stock || 0;
+            document.getElementById('editProductImage').value = product?.image_url || '';
+            document.getElementById('editProductDesc').value = product?.description || '';
+            document.getElementById('editProductActive').checked = product?.is_active !== false;
+            document.getElementById('editProductFeatured').checked = product?.is_featured === true;
+            
+            document.getElementById('productEditModal').classList.add('active');
+        }
+
+        function closeProductModal() {
+            document.getElementById('productEditModal').classList.remove('active');
+        }
+
+        async function editProduct(id) {
+            const product = allProducts.find(p => p.id === id);
+            if (product) showProductModal(product);
+        }
+
+        async function saveProduct() {
+            const id = document.getElementById('editProductId').value;
+            const data = {
+                name: document.getElementById('editProductName').value.trim(),
+                category_id: document.getElementById('editProductCategory').value || null,
+                price: parseInt(document.getElementById('editProductPrice').value) || 0,
+                unit: document.getElementById('editProductUnit').value.trim() || 'dona',
+                stock: parseInt(document.getElementById('editProductStock').value) || 0,
+                image_url: document.getElementById('editProductImage').value.trim() || null,
+                description: document.getElementById('editProductDesc').value.trim() || null,
+                is_active: document.getElementById('editProductActive').checked,
+                is_featured: document.getElementById('editProductFeatured').checked
+            };
+
+            if (!data.name) {
+                alert('Nomi kiritilmadi');
+                return;
+            }
+
+            let result;
+            if (id) {
+                result = await supabase.from('s_products').update(data).eq('id', id);
+            } else {
+                result = await supabase.from('s_products').insert(data);
+            }
+
+            if (!result.error) {
+                closeProductModal();
+                loadProducts();
+                alert(id ? 'Yangilandi ✅' : 'Qo\'shildi ✅');
+            } else {
+                alert('Xato: ' + result.error.message);
+            }
+        }
+
+        async function deleteProduct(id) {
+            if (!confirm('Mahsulotni o\'chirishni tasdiqlaysizmi?')) return;
+            
+            const { error } = await supabase.from('s_products').delete().eq('id', id);
+            if (!error) {
+                loadProducts();
+                alert('O\'chirildi ✅');
+            }
+        }
+
+        // Orders
+        async function loadOrders() {
+            if (!supabase) return;
+
+            const { data } = await supabase
+                .from('s_orders')
+                .select('*, s_order_items(*, s_products(name)), s_users(ism, telefon)')
+                .order('created_at', { ascending: false });
+
+            allOrders = data || [];
+            renderOrders(allOrders);
+        }
+
+        function renderOrders(orders) {
+            const container = document.getElementById('ordersList');
+            container.innerHTML = orders.map(o => `
+                <div class="card" style="margin-bottom:12px;">
+                    <div class="flex justify-between items-center mb-8">
+                        <strong>#${o.id.slice(0, 8)}</strong>
+                        <select class="input" style="padding:6px 10px;font-size:0.85em;width:auto;" 
+                                onchange="updateOrderStatus('${o.id}', this.value)">
+                            <option value="new" ${o.status === 'new' ? 'selected' : ''}>Yangi</option>
+                            <option value="processing" ${o.status === 'processing' ? 'selected' : ''}>Jarayonda</option>
+                            <option value="ready" ${o.status === 'ready' ? 'selected' : ''}>Tayyor</option>
+                            <option value="delivered" ${o.status === 'delivered' ? 'selected' : ''}>Yetkazildi</option>
+                            <option value="cancelled" ${o.status === 'cancelled' ? 'selected' : ''}>Bekor</option>
+                        </select>
+                    </div>
+                    <div style="font-size:0.85em;color:var(--text-secondary);">
+                        <div><strong>Mijoz:</strong> ${o.s_users?.ism || 'Noma\'lum'}</div>
+                        <div><strong>Telefon:</strong> ${o.telefon || 'Yo\'q'}</div>
+                        <div><strong>Manzil:</strong> ${o.address || 'Yo\'q'}</div>
+                        <div><strong>Sana:</strong> ${new Date(o.created_at).toLocaleString('uz-UZ')}</div>
+                    </div>
+                    <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border-color);">
+                        <strong style="color:var(--primary);font-size:1.1em;">${formatPrice(o.total)}</strong>
+                    </div>
+                    ${o.s_order_items?.length ? `
+                        <div style="margin-top:8px;font-size:0.85em;">
+                            ${o.s_order_items.map(i => `<div>• ${i.product_name || 'Mahsulot'} x${i.quantity}</div>`).join('')}
+                        </div>
+                    ` : ''}
+                    ${o.izoh ? `<div style="margin-top:8px;font-size:0.85em;color:var(--warning);">💬 ${o.izoh}</div>` : ''}
+                </div>
+            `).join('');
+        }
+
+        async function updateOrderStatus(orderId, status) {
+            const { error } = await supabase.from('s_orders').update({ status }).eq('id', orderId);
+            if (!error) {
+                alert('Status yangilandi ✅');
+                loadOrders();
+            }
+        }
+
+        // Utils
+        function formatPrice(num) {
+            if (typeof num === 'string') {
+                num = parseInt(num.replace(/[^\d]/g, '')) || 0;
+            }
+            return new Intl.NumberFormat('uz-UZ').format(num) + ' so\'m';
+        }
+
+        function getStatusText(status) {
+            const map = {
+                new: 'Yangi',
+                processing: 'Jarayonda',
+                ready: 'Tayyor',
+                delivered: 'Yetkazildi',
+                cancelled: 'Bekor'
+            };
+            return map[status] || status;
+        }
+
+        // Init
+        initSupabaseAdmin();
+    </script>
+</body>
+</html>

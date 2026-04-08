@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Oshxona mebellari - Sifatli va arzon">
+    <title>Mebel Store | Oshxona Modullari</title>
+    <link rel="stylesheet" href="assets/styles.css">
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <style>
+        .landing-hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 20px;
+            background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+        }
+        .landing-hero h1 {
+            font-size: 2.5em;
+            line-height: 1.2;
+            margin-bottom: 16px;
+        }
+        .landing-hero .highlight {
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin: 24px 0;
+        }
+        .feature-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 20px;
+            text-align: center;
+        }
+        .feature-item .icon {
+            font-size: 2em;
+            margin-bottom: 8px;
+        }
+        .cta-section {
+            text-align: center;
+            margin-top: auto;
+            padding-top: 40px;
+        }
+        .cta-section .btn {
+            margin-bottom: 12px;
+        }
+        .contact-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 20px 0;
+        }
+        .contact-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            text-align: center;
+        }
+        .contact-item .icon {
+            font-size: 1.5em;
+            margin-bottom: 8px;
+        }
+        .section-title {
+            font-size: 1.4em;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+        .products-preview {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 20px 0;
+        }
+        .preview-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+        }
+        .preview-card img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+        }
+        .preview-card .info {
+            padding: 12px;
+        }
+        .preview-card .name {
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+        .preview-card .price {
+            color: var(--primary);
+            font-size: 0.85em;
+        }
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+            font-size: 0.85em;
+        }
+    </style>
+</head>
+<body>
+    <div class="landing-hero">
+        <span style="font-size: 3em;">🏠</span>
+        <h1>
+            Oshxona <span class="highlight">Modullari</span><br>
+            Savdo Do'koni
+        </h1>
+        <p style="color: var(--text-secondary); font-size: 1.1em; margin-bottom: 8px;">
+            Sifatli oshxona mebellari —<br>
+            stollar, stullar, shkaflar va jihozlar
+        </p>
+        <p style="color: var(--primary); font-weight: 600;">
+            Toshkent bo'ylab yetkazib berish
+        </p>
+
+        <div class="features-grid">
+            <div class="feature-item">
+                <div class="icon">🚚</div>
+                <div style="font-weight:600;">Yetkazib berish</div>
+                <div style="font-size:0.8em;color:var(--text-secondary);">Toshkent bo'ylab</div>
+            </div>
+            <div class="feature-item">
+                <div class="icon">✓</div>
+                <div style="font-weight:600;">Sifat kafolati</div>
+                <div style="font-size:0.8em;color:var(--text-secondary);">1 yil garantiya</div>
+            </div>
+            <div class="feature-item">
+                <div class="icon">💳</div>
+                <div style="font-weight:600;">To'lov usullari</div>
+                <div style="font-size:0.8em;color:var(--text-secondary);">Naqd / Click / Payme</div>
+            </div>
+            <div class="feature-item">
+                <div class="icon">📞</div>
+                <div style="font-weight:600;">Qo'ng'iroq qiling</div>
+                <div style="font-size:0.8em;color:var(--text-secondary);">24/7 qo'llab</div>
+            </div>
+        </div>
+
+        <div class="products-preview">
+            <div class="preview-card">
+                <div style="height:120px;background:linear-gradient(135deg,#1a1a3a,#2a2a4a);display:flex;align-items:center;justify-content:center;font-size:2.5em;">
+                    🪑
+                </div>
+                <div class="info">
+                    <div class="name">Oshxona stoli</div>
+                    <div class="price">1,500,000 so'm</div>
+                </div>
+            </div>
+            <div class="preview-card">
+                <div style="height:120px;background:linear-gradient(135deg,#1a1a3a,#2a2a4a);display:flex;align-items:center;justify-content:center;font-size:2.5em;">
+                    💺
+                </div>
+                <div class="info">
+                    <div class="name">Oshxona stuli</div>
+                    <div class="price">450,000 so'm</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="cta-section">
+            <button class="btn" onclick="openTelegramBot()">
+                🛒 Bot orqali buyurtma berish
+            </button>
+            <button class="btn btn-secondary" onclick="showCatalog()">
+                📦 Katalog ko'rish
+            </button>
+        </div>
+
+        <div style="margin-top:40px;">
+            <h3 class="section-title">Bog'lanish</h3>
+            <div class="contact-grid">
+                <a href="tel:+998901234567" class="contact-item" style="text-decoration:none;color:inherit;">
+                    <div class="icon">📱</div>
+                    <div style="font-weight:600;">+998 90 123 45 67</div>
+                </a>
+                <a href="https://t.me/your_bot" class="contact-item" style="text-decoration:none;color:inherit;">
+                    <div class="icon">✈️</div>
+                    <div style="font-weight:600;">Telegram</div>
+                </a>
+            </div>
+        </div>
+
+        <div style="margin-top:40px;">
+            <h3 class="section-title">Statistika</h3>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="value">500+</div>
+                    <div class="label">Mamnun mijozlar</div>
+                </div>
+                <div class="stat-card">
+                    <div class="value">50+</div>
+                    <div class="label">Mahsulotlar</div>
+                </div>
+                <div class="stat-card">
+                    <div class="value">3+</div>
+                    <div class="label">Yillik tajriba</div>
+                </div>
+                <div class="stat-card">
+                    <div class="value">100%</div>
+                    <div class="label">Sifat kafolati</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>© 2025 Mebel Store. Barcha huquqlar himoyalangan.</p>
+        <p style="margin-top:8px;">
+            <a href="app.html" style="color:var(--primary);">Bot orqali kirish</a> |
+            <a href="admin.html" style="color:var(--text-secondary);">Admin</a>
+        </p>
+    </div>
+
+    <script>
+        function openTelegramBot() {
+            const botUsername = 'YOUR_BOT_USERNAME';
+            const botUrl = `https://t.me/${botUsername}/app`;
+            window.Telegram?.WebApp?.openTelegramLink(botUrl);
+        }
+
+        function showCatalog() {
+            window.location.href = 'app.html';
+        }
+    </script>
+    <script src="assets/app.js"></script>
+</body>
+</html>
