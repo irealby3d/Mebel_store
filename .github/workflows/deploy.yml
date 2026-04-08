@@ -18,12 +18,12 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Verify publish directory
-        run: ls -la ./Mebel_store/webapp
+        run: ls -la ./webapp
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./Mebel_store/webapp
+          publish_dir: ./webapp
           publish_branch: gh-pages
           enable_jekyll: false
