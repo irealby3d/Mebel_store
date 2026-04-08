@@ -2,11 +2,28 @@
    Mebel Store - Main Application JS
    ============================================================ */
 
-// Config - GitHub Secrets dan inject qilinadi (yoki .env.local)
+// Mock Telegram WebApp for browser testing
+if (typeof window.Telegram === 'undefined') {
+    window.Telegram = { WebApp: { 
+        initDataUnsafe: { user: { id: 123456789, first_name: 'Test User' } },
+        ready: () => {},
+        expand: () => {},
+        HapticFeedback: { impactOccurred: () => {} }
+    }};
+}
+
+// Config - GitHub Secrets dan inject qilinadi
+// Agar bo'sh bo'lsa, local testing uchun fallback
 const CONFIG = {
     SUPABASE_URL: '',
     SUPABASE_ANON_KEY: ''
 };
+
+// Browser testing uchun fallback (faqat localhost)
+if (!CONFIG.SUPABASE_URL && window.location.hostname === 'localhost') {
+    CONFIG.SUPABASE_URL = 'https://hgisisjblsegtnybjkhn.supabase.co';
+    CONFIG.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhnaXNpc2pibHNlZ3RueWJqa2huIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NzM3NjYsImV4cCI6MjA5MTE0OTc2Nn0.dragZi69rzDyBjR_5qxm2DS5izedGn22R7la6tAO4vQ';
+}
 
 const state = {
     user: null,
