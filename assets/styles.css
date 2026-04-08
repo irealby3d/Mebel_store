@@ -1,0 +1,8 @@
+:root {
+  --bg: #0a0a1a;
+  --text: #e0e0e0;
+  --primary: #ff6b00;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: Arial, sans-serif; }
+header { padding: 16px; text-align: center; font-weight: bold; }
+main { padding: 20px; text-align: center; }
