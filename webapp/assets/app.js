@@ -33,6 +33,7 @@ function getTelegramUser() {
   return { id: 380004653, first_name: 'Test Foydalanuvchi' };
 }
 const user = getTelegramUser();
+console.log('TELEGRAM USER (for testing):', user);
 
 if (tg) {
   tg.ready();
