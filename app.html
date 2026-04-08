@@ -265,6 +265,16 @@
             }
         };
 
+        // Mock Telegram WebApp data for browser testing
+        if (!window.Telegram) {
+            window.Telegram = { WebApp: { 
+                initDataUnsafe: { user: { id: 123456789, first_name: 'Test', last_name: 'User', username: 'test_user' } },
+                ready: () => {},
+                expand: () => {},
+                HapticFeedback: { impactOccurred: () => {} }
+            }};
+        }
+
         initApp();
     </script>
     <script src="assets/app.js"></script>
