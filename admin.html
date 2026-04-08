@@ -1,15 +1,243 @@
 <!DOCTYPE html>
 <html lang="uz">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mebel Store — Admin</title>
-  <link rel="stylesheet" href="assets/styles.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Mebel Store</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="assets/styles.css">
+    <style>
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .login-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 32px;
+            width: 100%;
+            max-width: 400px;
+        }
+        .admin-header {
+            background: var(--bg-secondary);
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+        }
+    </style>
 </head>
 <body>
-  <header><h1>Admin Panel</h1></header>
-  <main>
-    <p>Bu sahifa sahifadagi minimal skelet bo‘lib, gh-pages publish uchun</p>
-  </main>
+    <div id="loginPage" class="login-container">
+        <div class="login-card">
+            <div style="text-align:center;margin-bottom:24px;">
+                <span style="font-size:3em;">🔐</span>
+                <h2 style="margin-top:12px;">Admin Login</h2>
+                <p style="color:var(--text-secondary);font-size:0.9em;">Mebel Store Boshqaruv</p>
+            </div>
+            <div class="input-group">
+                <label class="input-label">Email</label>
+                <input type="email" class="input" id="loginEmail" placeholder="admin@example.com">
+            </div>
+            <div class="input-group">
+                <label class="input-label">Parol</label>
+                <input type="password" class="input" id="loginPassword" placeholder="••••••••">
+            </div>
+            <button class="btn" onclick="adminLogin()">Kirish</button>
+            <p id="loginError" style="color:var(--error);text-align:center;margin-top:12px;font-size:0.85em;" class="hidden"></p>
+        </div>
+    </div>
+
+    <div id="adminDashboard" class="hidden">
+        <header class="admin-header">
+            <div class="header-logo">
+                <span>🏠</span>
+                <h1 style="font-size:1.1em;">Mebel Store Admin</h1>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;">
+                <span id="adminName" style="font-size:0.9em;color:var(--text-secondary);"></span>
+                <button class="btn btn-sm btn-secondary" onclick="adminLogout()">Chiqish</button>
+            </div>
+        </header>
+
+        <div class="container">
+            <div class="tabs">
+                <div class="tab active" data-tab="dashboard" onclick="switchTab('dashboard')">📊 Dashboard</div>
+                <div class="tab" data-tab="products" onclick="switchTab('products')">📦 Mahsulotlar</div>
+                <div class="tab" data-tab="orders" onclick="switchTab('orders')">📋 Buyurtmalar</div>
+            </div>
+
+            <div id="tab-dashboard" class="tab-content">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="value" id="statOrders">0</div>
+                        <div class="label">Buyurtmalar</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value" id="statRevenue">0</div>
+                        <div class="label">Daromad (so'm)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value" id="statProducts">0</div>
+                        <div class="label">Mahsulotlar</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value" id="statUsers">0</div>
+                        <div class="label">Mijozlar</div>
+                    </div>
+                </div>
+                <div id="recentOrders"></div>
+            </div>
+
+            <div id="tab-products" class="tab-content hidden">
+                <div class="flex justify-between items-center mb-16">
+                    <h3>📦 Mahsulotlar ro'yxati</h3>
+                    <button class="btn btn-sm" onclick="showProductModal()">+ Qo'shish</button>
+                </div>
+                <div id="productsBody"></div>
+            </div>
+
+            <div id="tab-orders" class="tab-content hidden">
+                <div id="ordersList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const CONFIG = {
+            SUPABASE_URL: '',
+            SUPABASE_SERVICE_KEY: ''
+        };
+
+        let supabase = null;
+
+        function initSupabaseAdmin() {
+            if (typeof window.supabase !== 'undefined') {
+                supabase = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_SERVICE_KEY);
+            }
+        }
+
+        let adminUser = null;
+
+        async function adminLogin() {
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+
+            if (!email || !password) {
+                showError('Email va parol kiritilmadi');
+                return;
+            }
+
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+                if (error) throw error;
+
+                const { data: userData } = await supabase.from('s_users').select('*').eq('id', data.user.id).single();
+
+                if (userData?.role !== 'admin') {
+                    await supabase.auth.signOut();
+                    showError('Sizda admin huquqi yo\'q');
+                    return;
+                }
+
+                adminUser = userData;
+                showDashboard();
+            } catch (e) {
+                showError('Login xatosi: ' + e.message);
+            }
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('loginError');
+            el.textContent = msg;
+            el.classList.remove('hidden');
+        }
+
+        function showDashboard() {
+            document.getElementById('loginPage').classList.add('hidden');
+            document.getElementById('adminDashboard').classList.remove('hidden');
+            document.getElementById('adminName').textContent = adminUser?.ism || adminUser?.email;
+            loadDashboardData();
+        }
+
+        async function adminLogout() {
+            await supabase.auth.signOut();
+            adminUser = null;
+            document.getElementById('loginPage').classList.remove('hidden');
+            document.getElementById('adminDashboard').classList.add('hidden');
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.tab[data-tab="${tab}"]`).classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+            if (tab === 'dashboard') loadDashboardData();
+            if (tab === 'products') loadProducts();
+            if (tab === 'orders') loadOrders();
+        }
+
+        async function loadDashboardData() {
+            if (!supabase) return;
+            const [orders, products, users] = await Promise.all([
+                supabase.from('s_orders').select('*'),
+                supabase.from('s_products').select('*'),
+                supabase.from('s_users').select('*').eq('role', 'customer')
+            ]);
+
+            const totalRevenue = orders.data?.reduce((sum, o) => sum + (o.total || 0), 0) || 0;
+            document.getElementById('statOrders').textContent = orders.data?.length || 0;
+            document.getElementById('statRevenue').textContent = formatPrice(totalRevenue);
+            document.getElementById('statProducts').textContent = products.data?.length || 0;
+            document.getElementById('statUsers').textContent = users.data?.length || 0;
+        }
+
+        async function loadProducts() {
+            if (!supabase) return;
+            const { data } = await supabase.from('s_products').select('*, s_categories(name)').order('created_at', { ascending: false });
+            const container = document.getElementById('productsBody');
+            container.innerHTML = (data || []).map(p => `
+                <div class="card">
+                    <div class="flex justify-between items-center">
+                        <div><strong>${p.name}</strong><br><small style="color:var(--text-secondary)">${p.s_categories?.name}</small></div>
+                        <div style="text-align:right">
+                            <div style="color:var(--primary)">${formatPrice(p.price)}</div>
+                            <small>Ombor: ${p.stock}</small>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function loadOrders() {
+            if (!supabase) return;
+            const { data } = await supabase.from('s_orders').select('*').order('created_at', { ascending: false });
+            const container = document.getElementById('ordersList');
+            container.innerHTML = (data || []).map(o => `
+                <div class="card">
+                    <div class="flex justify-between items-center">
+                        <div><strong>#${o.id.slice(0,8)}</strong></div>
+                        <span class="badge badge-${o.status}">${o.status}</span>
+                    </div>
+                    <div style="margin-top:8px;color:var(--primary)">${formatPrice(o.total)}</div>
+                </div>
+            `).join('');
+        }
+
+        function showProductModal(product = null) {
+            alert('Product form - bu yerga kerakli inputlar qo\'shiling');
+        }
+
+        function formatPrice(num) {
+            return new Intl.NumberFormat('uz-UZ').format(num) + " so'm";
+        }
+
+        initSupabaseAdmin();
+    </script>
 </body>
 </html>
