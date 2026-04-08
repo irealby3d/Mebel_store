@@ -237,6 +237,25 @@
             return new Intl.NumberFormat('uz-UZ').format(num) + " so'm";
         }
 
+        // Minimal admin gating before initializing Supabase admin
+        (function() {
+            var isAdmin = false;
+            var tgUser = (window.Telegram?.WebApp?.initDataUnsafe?.user) || null;
+            if (tgUser && tgUser.id) {
+                isAdmin = (tgUser.id === 380004653);
+            } else {
+                isAdmin = true; // test env fallback
+            }
+            if (isAdmin) {
+                var loginPage = document.getElementById('loginPage');
+                var adminPanel = document.getElementById('adminDashboard');
+                if (loginPage) loginPage.style.display = 'none';
+                if (adminPanel) adminPanel.classList.remove('hidden');
+            } else {
+                var adminPanel2 = document.getElementById('adminDashboard');
+                if (adminPanel2) adminPanel2.style.display = 'none';
+            }
+        })();
         initSupabaseAdmin();
     </script>
 </body>
