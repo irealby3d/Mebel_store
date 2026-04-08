@@ -30,10 +30,10 @@ jobs:
           with open('webapp/assets/app.js', 'r') as f:
               content = f.read()
           content = content.replace(
-              "SUPABASE_URL: window.SUPABASE_URL || ''",
+              "SUPABASE_URL: ''",
               f"SUPABASE_URL: '{supabase_url}'"
           ).replace(
-              "SUPABASE_ANON_KEY: window.SUPABASE_ANON_KEY || ''",
+              "SUPABASE_ANON_KEY: ''",
               f"SUPABASE_ANON_KEY: '{anon_key}'"
           )
           with open('webapp/assets/app.js', 'w') as f:
@@ -43,10 +43,10 @@ jobs:
           with open('webapp/app.html', 'r') as f:
               content = f.read()
           content = content.replace(
-              "SUPABASE_URL: window.SUPABASE_URL || ''",
+              "SUPABASE_URL: ''",
               f"SUPABASE_URL: '{supabase_url}'"
           ).replace(
-              "SUPABASE_ANON_KEY: window.SUPABASE_ANON_KEY || ''",
+              "SUPABASE_ANON_KEY: ''",
               f"SUPABASE_ANON_KEY: '{anon_key}'"
           )
           with open('webapp/app.html', 'w') as f:
@@ -56,10 +56,10 @@ jobs:
           with open('webapp/admin.html', 'r') as f:
               content = f.read()
           content = content.replace(
-              "SUPABASE_URL: window.SUPABASE_URL || ''",
+              "SUPABASE_URL: ''",
               f"SUPABASE_URL: '{supabase_url}'"
           ).replace(
-              "SUPABASE_SERVICE_KEY: window.SUPABASE_SERVICE_KEY || ''",
+              "SUPABASE_SERVICE_KEY: ''",
               f"SUPABASE_SERVICE_KEY: '{service_key}'"
           )
           with open('webapp/admin.html', 'w') as f:
@@ -67,6 +67,10 @@ jobs:
           
           print("Secrets injected successfully!")
           PYEOF
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
