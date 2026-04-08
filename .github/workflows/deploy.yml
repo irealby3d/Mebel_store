@@ -9,21 +9,23 @@ permissions:
   contents: write
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          sparse-checkout: |
-            webapp
-            .github
-          sparse-checkout-cone-mode: false
 
-      - name: Deploy
+      - name: Delete old gh-pages
+        run: git push origin --delete gh-pages || true
+
+      - name: Copy webapp files to temp
+        run: cp -r webapp/. /tmp/webapp-deploy/
+
+      - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./webapp
+          publish_dir: /tmp/webapp-deploy
           publish_branch: gh-pages
           force_orphan: true
+          enable_jekyll: false
