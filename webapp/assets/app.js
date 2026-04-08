@@ -4,9 +4,8 @@
 
 // Configuration
 const CONFIG = {
-    SUPABASE_URL: 'YOUR_SUPABASE_URL',
-    SUPABASE_ANON_KEY: 'YOUR_ANON_KEY',
-    TELEGRAM_BOT_TOKEN: 'YOUR_BOT_TOKEN'
+    SUPABASE_URL: 'https://hgisisjblsegtnybjkhn.supabase.co',
+    SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhnaXNpc2pibHNlZ3RueWJqa2huIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NzM3NjYsImV4cCI6MjA5MTE0OTc2Nn0.dragZi69rzDyBjR_5qxm2DS5izedGn22R7la6tAO4vQ'
 };
 
 // State

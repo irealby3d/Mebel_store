@@ -24,7 +24,9 @@ except ImportError:
     sys.exit(1)
 
 
-def load_env(filepath=".env"):
+def load_env(filepath=None):
+    if filepath is None:
+        filepath = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env")
     if os.path.exists(filepath):
         with open(filepath) as f:
             for line in f:
