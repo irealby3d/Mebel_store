@@ -3,8 +3,23 @@ node_modules/
 *.log
 .env
 .env.local
+.env.*
 __pycache__/
 *.pyc
 .vercel/
 dist/
 build/
+
+# Python virtual environment
+venv/
+telegram/venv/
+*.venv/
+
+# Local config and logs
+config/
+logs/
+telegram/config/
+telegram/logs/
+
+# GitHub Actions artifacts
+.github/workflows/*.log
