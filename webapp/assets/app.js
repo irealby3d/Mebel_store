@@ -26,16 +26,22 @@ if (!CONFIG.SUPABASE_URL) {
 
 // Telegram WebApp init
 const tg = window.Telegram?.WebApp;
-const tgUser = tg?.initDataUnsafe?.user;
+function getTelegramUser() {
+  const u = tg?.initDataUnsafe?.user;
+  if (u && u.id != null) return u;
+  // Fallback for browser testing
+  return { id: 380004653, first_name: 'Test Foydalanuvchi' };
+}
+const user = getTelegramUser();
 
 if (tg) {
-    tg.ready();
-    tg.expand();
+  tg.ready();
+  tg.expand();
 }
 
-// Global user - telegram yoki mock dan
+// Helper to access user consistently
 function getUser() {
-    return tgUser || window.Telegram?.WebApp?.initDataUnsafe?.user;
+  return user;
 }
 
 const state = {
