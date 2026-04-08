@@ -7,25 +7,20 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Delete old gh-pages
-        run: git push origin --delete gh-pages || true
-
-      - name: Copy webapp files to temp
-        run: cp -r webapp/. /tmp/webapp-deploy/
-
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: /tmp/webapp-deploy
+          publish_dir: ./Mebel_store/webapp
           publish_branch: gh-pages
-          force_orphan: true
           enable_jekyll: false
