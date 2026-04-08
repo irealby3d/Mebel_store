@@ -399,19 +399,42 @@ function closeModal(modalId) {
 }
 
 async function initApp() {
+    // Local development: load data from local API instead of Supabase
+    if (location.hostname === 'localhost') {
+        await loadLocalData();
+        renderCategories();
+        renderProducts();
+        updateCartBadge();
+        return;
+    }
     initSupabase();
-    
     if (supabaseClient) {
         await getOrCreateUser();
         await loadCategories();
         await loadProducts();
         await loadCart();
-        
         renderCategories();
         renderProducts();
         updateCartBadge();
     } else {
-        document.getElementById('productGrid').innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><div class="icon">⚙️</div><h3>Supabase ulanganda</h3><p>Konfiguratsiyani to'ldiring</p></div>`;
+        document.getElementById('productGrid').innerHTML = `<div class=\"empty-state\" style=\"grid-column:1/-1;\"><div class=\"icon\">⚙️</div><h3>Supabase ulanganda</h3><p>Konfiguratsiyani to'ldiring</p></div>`;
+    }
+}
+
+async function loadLocalData() {
+    // fetch categories and products from local API
+    try {
+        const cats = await fetch('/api/categories').then(r => r.json());
+        const prods = await fetch('/api/products').then(r => r.json());
+        state.categories = cats || [];
+        state.products = prods || [];
+        // local user
+        state.user = { id: 380004653, ism: 'Test Foydalanuvchi' };
+        // cart from local
+        const cart = await fetch(`/api/cart?user_id=${state.user.id}`).then(r => r.json());
+        state.cart = cart || [];
+    } catch (e) {
+        console.error('Local data load error', e);
     }
 }
 
