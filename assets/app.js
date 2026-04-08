@@ -4,8 +4,8 @@
 
 // Config - GitHub Secrets dan inject qilinadi (yoki .env.local)
 const CONFIG = {
-    SUPABASE_URL: window.SUPABASE_URL || 'https://hgisisjblsegtnybjkhn.supabase.co',
-    SUPABASE_ANON_KEY: window.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhnaXNpc2pibHNlZ3RueWJqa2huIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NzM3NjYsImV4cCI6MjA5MTE0OTc2Nn0.dragZi69rzDyBjR_5qxm2DS5izedGn22R7la6tAO4vQ'
+    SUPABASE_URL: 'https://hgisisjblsegtnybjkhn.supabase.co',
+    SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhnaXNpc2pibHNlZ3RueWJqa2huIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NzM3NjYsImV4cCI6MjA5MTE0OTc2Nn0.dragZi69rzDyBjR_5qxm2DS5izedGn22R7la6tAO4vQ'
 };
 
 const state = {
