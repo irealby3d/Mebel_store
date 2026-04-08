@@ -39,18 +39,7 @@ jobs:
           with open('webapp/assets/app.js', 'w') as f:
               f.write(content)
           
-          # Replace in app.html
-          with open('webapp/app.html', 'r') as f:
-              content = f.read()
-          content = content.replace(
-              "SUPABASE_URL: ''",
-              f"SUPABASE_URL: '{supabase_url}'"
-          ).replace(
-              "SUPABASE_ANON_KEY: ''",
-              f"SUPABASE_ANON_KEY: '{anon_key}'"
-          )
-          with open('webapp/app.html', 'w') as f:
-              f.write(content)
+          # Replace in app.html (CONFIG is defined in app.js, not app.html)
           
           # Replace in admin.html
           with open('webapp/admin.html', 'r') as f:
