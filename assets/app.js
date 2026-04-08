@@ -424,14 +424,15 @@ async function initApp() {
 async function loadLocalData() {
     // fetch categories and products from local API
     try {
-        const cats = await fetch('/api/categories').then(r => r.json());
-        const prods = await fetch('/api/products').then(r => r.json());
+        const base = location.hostname === 'localhost' ? 'http://localhost:3001' : '';
+        const cats = await fetch(`${base}/api/categories`).then(r => r.json());
+        const prods = await fetch(`${base}/api/products`).then(r => r.json());
         state.categories = cats || [];
         state.products = prods || [];
         // local user
         state.user = { id: 380004653, ism: 'Test Foydalanuvchi' };
         // cart from local
-        const cart = await fetch(`/api/cart?user_id=${state.user.id}`).then(r => r.json());
+        const cart = await fetch(`${base}/api/cart?user_id=${state.user.id}`).then(r => r.json());
         state.cart = cart || [];
     } catch (e) {
         console.error('Local data load error', e);
